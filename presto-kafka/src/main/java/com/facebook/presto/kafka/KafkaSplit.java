@@ -35,6 +35,8 @@ public class KafkaSplit
         implements ConnectorSplit
 {
     private final String connectorId;
+    // Henrich
+    private final String tableName;
     private final String topicName;
     private final String keyDataFormat;
     private final String messageDataFormat;
@@ -46,6 +48,7 @@ public class KafkaSplit
     @JsonCreator
     public KafkaSplit(
             @JsonProperty("connectorId") String connectorId,
+            @JsonProperty("tableName") String tableName,
             @JsonProperty("topicName") String topicName,
             @JsonProperty("keyDataFormat") String keyDataFormat,
             @JsonProperty("messageDataFormat") String messageDataFormat,
@@ -55,6 +58,7 @@ public class KafkaSplit
             @JsonProperty("leader") HostAddress leader)
     {
         this.connectorId = requireNonNull(connectorId, "connector id is null");
+        this.tableName = requireNonNull(tableName, "tableName is null");
         this.topicName = requireNonNull(topicName, "topicName is null");
         this.keyDataFormat = requireNonNull(keyDataFormat, "dataFormat is null");
         this.messageDataFormat = requireNonNull(messageDataFormat, "messageDataFormat is null");
@@ -80,6 +84,12 @@ public class KafkaSplit
     public long getEnd()
     {
         return end;
+    }
+
+    @JsonProperty
+    public String getTableName()
+    {
+        return tableName;
     }
 
     @JsonProperty
@@ -135,6 +145,7 @@ public class KafkaSplit
     {
         return toStringHelper(this)
                 .add("connectorId", connectorId)
+                .add("tableName", tableName)
                 .add("topicName", topicName)
                 .add("keyDataFormat", keyDataFormat)
                 .add("messageDataFormat", messageDataFormat)

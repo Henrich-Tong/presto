@@ -17,10 +17,12 @@ import com.facebook.presto.decoder.DecoderColumnHandle;
 import com.facebook.presto.decoder.FieldDecoder;
 import com.facebook.presto.decoder.FieldValueProvider;
 import com.facebook.presto.decoder.RowDecoder;
+import com.facebook.presto.decoder.separator.SeparatorRowDecoder;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.type.Type;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.airlift.log.Logger;
@@ -33,11 +35,7 @@ import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.message.MessageAndOffset;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.facebook.presto.kafka.KafkaErrorCode.KAFKA_SPLIT_ERROR;
@@ -67,6 +65,10 @@ public class KafkaRecordSet
     private final List<Type> columnTypes;
 
     private final Set<FieldValueProvider> globalInternalFieldValueProviders;
+
+    // Henrich
+    private Splitter splitter = Splitter.on("|").trimResults();
+    private int TABLE_NAME_INDEX = 3;
 
     KafkaRecordSet(KafkaSplit split,
             KafkaSimpleConsumerManager consumerManager,
@@ -172,7 +174,9 @@ public class KafkaRecordSet
                     }
 
                     if (messageOffset >= cursorOffset) {
-                        return nextRow(currentMessageAndOffset);
+                        // Henrich
+                        boolean result = nextRow(currentMessageAndOffset);
+                        if (result) return true;
                     }
                 }
                 messageAndOffsetIterator = null;
@@ -208,6 +212,15 @@ public class KafkaRecordSet
                 messageData = new byte[message.remaining()];
                 message.get(messageData);
             }
+
+            // Henrich
+            if (messageDecoder instanceof SeparatorRowDecoder) {
+                String content = new String(messageData);
+                List<String> values = splitter.splitToList(content);
+                if(values.size() <= TABLE_NAME_INDEX) return false;
+                if(!split.getTableName().equals(values.get(TABLE_NAME_INDEX))) return false;
+            }
+
 
             Set<FieldValueProvider> fieldValueProviders = new HashSet<>();
 

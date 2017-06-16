@@ -104,6 +104,7 @@ public class KafkaSplitManager
                 for (int i = offsets.length - 1; i > 0; i--) {
                     KafkaSplit split = new KafkaSplit(
                             connectorId,
+                            kafkaTableHandle.getTableName(),
                             metadata.topic(),
                             kafkaTableHandle.getKeyDataFormat(),
                             kafkaTableHandle.getMessageDataFormat(),

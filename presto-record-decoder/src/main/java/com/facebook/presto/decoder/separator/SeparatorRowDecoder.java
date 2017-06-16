@@ -22,40 +22,43 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.facebook.presto.decoder.separator.SeparatorDecoderModule.log;
+
 /**
  * Decoder for raw (direct byte) rows. All field decoders map bytes directly to Presto columns.
  */
 public class SeparatorRowDecoder
-        implements RowDecoder
-{
-    public static final String NAME = "separator";
+    implements RowDecoder {
+  public static final String NAME = "separator";
 
-    @Override
-    public String getName()
-    {
-        return NAME;
+  @Override
+  public String getName() {
+    return NAME;
+  }
+
+  @Override
+  public boolean decodeRow(byte[] data,
+                           Map<String, String> dataMap,
+                           Set<FieldValueProvider> fieldValueProviders,
+                           List<DecoderColumnHandle> columnHandles,
+                           Map<DecoderColumnHandle, FieldDecoder<?>> fieldDecoders) {
+    String content = new String(data);
+    List<String> values = SeparatorDecoderModule.SEPARATOR.splitToList(content);
+    log.debug("--- content: " + content);
+
+    for (DecoderColumnHandle columnHandle : columnHandles) {
+      if (columnHandle.isInternal()) {
+        continue;
+      }
+
+      @SuppressWarnings("unchecked")
+      FieldDecoder<List<String>> decoder = (FieldDecoder<List<String>>) fieldDecoders.get(columnHandle);
+
+      if (decoder != null) {
+        fieldValueProviders.add(decoder.decode(values, columnHandle));
+      }
     }
 
-    @Override
-    public boolean decodeRow(byte[] data,
-            Map<String, String> dataMap,
-            Set<FieldValueProvider> fieldValueProviders,
-            List<DecoderColumnHandle> columnHandles,
-            Map<DecoderColumnHandle, FieldDecoder<?>> fieldDecoders)
-    {
-        for (DecoderColumnHandle columnHandle : columnHandles) {
-            if (columnHandle.isInternal()) {
-                continue;
-            }
-
-            @SuppressWarnings("unchecked")
-            FieldDecoder<byte[]> decoder = (FieldDecoder<byte[]>) fieldDecoders.get(columnHandle);
-
-            if (decoder != null) {
-                fieldValueProviders.add(decoder.decode(data, columnHandle));
-            }
-        }
-
-        return false;
-    }
+    return false;
+  }
 }

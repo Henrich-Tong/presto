@@ -38,5 +38,6 @@ public class SeparatorDecoderModule
     {
         bindRowDecoder(binder, SeparatorRowDecoder.class);
         bindFieldDecoder(binder, SeparatorFieldDecoder.class);
+        bindFieldDecoder(binder, RFC2822SeparatorFieldDecoder.class);
     }
 }

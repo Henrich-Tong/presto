@@ -93,7 +93,9 @@ public class KafkaMetadata
 
         return new KafkaTableHandle(connectorId,
                 schemaTableName.getSchemaName(),
-                schemaTableName.getTableName(),
+//                schemaTableName.getTableName(),
+                // Henrich
+                table.getTableName(),
                 table.getTopicName(),
                 getDataFormat(table.getKey()),
                 getDataFormat(table.getMessage()));
